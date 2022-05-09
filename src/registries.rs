@@ -45,7 +45,7 @@ pub fn generate() {
     let mut contents: String = String::new();
 
     // Modules
-    contents.add_assign(modules.iter().map(|m| format!("mod {}; ", m)).collect::<String>().as_str());
+    contents.add_assign(modules.iter().map(|m| format!("pub mod {}; ", m)).collect::<String>().as_str());
 
     // Trait
     contents.add_assign("pub trait Registry { fn get_protocol_id() -> u32; }");
