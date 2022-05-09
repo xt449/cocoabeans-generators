@@ -21,7 +21,7 @@ pub fn generate() {
 
         // Enum
         let entries = object.get("entries").unwrap().as_object().unwrap();
-        contents.add_assign(format!("pub enum {}Registry {{ {}}}", pascal, entries.iter().map(|kvp| format!("{} = {}, ", util::namespace_to_rust_identifier(kvp.0), kvp.1.as_object().unwrap().get("protocol_id").unwrap().as_u64().unwrap())).collect::<String>()).as_str());
+        contents.add_assign(format!("#[derive(Copy, Clone)] pub enum {}Registry {{ {}}}", pascal, entries.iter().map(|kvp| format!("{} = {}, ", util::namespace_to_rust_identifier(kvp.0), kvp.1.as_object().unwrap().get("protocol_id").unwrap().as_u64().unwrap())).collect::<String>()).as_str());
 
         // Registry
         let protocol_id = object.get("protocol_id").unwrap().as_u64().unwrap();
