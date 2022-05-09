@@ -30,7 +30,7 @@ pub fn generate() {
         // Default
         let default = object.get("default");
         if default.is_some() {
-            contents.add_assign(format!(" impl Default for {}Registry {{fn default() -> Self {{ return {}Registry::{}; }} }}", pascal, pascal, default.unwrap().as_str().unwrap()).as_str());
+            contents.add_assign(format!(" impl Default for {}Registry {{fn default() -> Self {{ return {}Registry::{}; }} }}", pascal, pascal, util::namespace_to_rust_identifier(default.unwrap().as_str().unwrap()).as_str()).as_str());
         }
 
         let file_path = PathBuf::from(format!("./registries/{}.rs", snake));
