@@ -5,4 +5,6 @@ fn main() {
     println!("Starting...");
 
     registries::generate();
+
+    println!("Done!")
 }

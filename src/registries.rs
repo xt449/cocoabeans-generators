@@ -25,12 +25,12 @@ pub fn generate() {
 
         // Registry
         let protocol_id = object.get("protocol_id").unwrap().as_u64().unwrap();
-        contents.add_assign(format!(" impl crate::Registry for {} {{ fn get_protocol_id() -> u32 {{ return {}; }} }}", pascal, protocol_id).as_str());
+        contents.add_assign(format!(" impl crate::Registry for {}Registry {{ fn get_protocol_id() -> u32 {{ return {}; }} }}", pascal, protocol_id).as_str());
 
         // Default
         let default = object.get("default");
         if default.is_some() {
-            contents.add_assign(format!(" impl Default for {} {{fn default() -> Self {{ return {}::{}; }} }}", pascal, pascal, default.unwrap().as_str().unwrap()).as_str());
+            contents.add_assign(format!(" impl Default for {}Registry {{fn default() -> Self {{ return {}Registry::{}; }} }}", pascal, pascal, default.unwrap().as_str().unwrap()).as_str());
         }
 
         let file_path = PathBuf::from(format!("./registries/{}.rs", snake));
