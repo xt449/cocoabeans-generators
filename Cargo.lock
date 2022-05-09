@@ -3,7 +3,7 @@
 version = 3
 
 [[package]]
-name = "cocobeans-generators"
+name = "cocoabeans-generators"
 version = "0.1.0"
 dependencies = [
  "serde_json",
