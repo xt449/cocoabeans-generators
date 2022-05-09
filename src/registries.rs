@@ -25,7 +25,7 @@ pub fn generate() {
 
         // Registry
         let protocol_id = object.get("protocol_id").unwrap().as_u64().unwrap();
-        contents.add_assign(format!(" impl crate::Registry for {}Registry {{ fn get_protocol_id() -> u32 {{ return {}; }} }}", pascal, protocol_id).as_str());
+        contents.add_assign(format!(" impl crate::registries::Registry for {}Registry {{ fn get_protocol_id() -> u32 {{ return {}; }} }}", pascal, protocol_id).as_str());
 
         // Default
         let default = object.get("default");
