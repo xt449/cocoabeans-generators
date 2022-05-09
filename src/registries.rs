@@ -21,7 +21,7 @@ pub fn generate() {
 
         // Enum
         let entries = object.get("entries").unwrap().as_object().unwrap();
-        contents.add_assign(format!("#[derive(Copy, Clone)] pub enum {}Registry {{ {}}}", pascal, entries.iter().map(|kvp| format!("{} = {}, ", util::namespace_to_rust_identifier(kvp.0), kvp.1.as_object().unwrap().get("protocol_id").unwrap().as_u64().unwrap())).collect::<String>()).as_str());
+        contents.add_assign(format!("#![allow(non_camel_case_types, unused)]\n#[derive(Copy, Clone)] pub enum {}Registry {{ {}}}", pascal, entries.iter().map(|kvp| format!("{} = {}, ", util::namespace_to_rust_identifier(kvp.0), kvp.1.as_object().unwrap().get("protocol_id").unwrap().as_u64().unwrap())).collect::<String>()).as_str());
 
         // Registry
         let protocol_id = object.get("protocol_id").unwrap().as_u64().unwrap();
@@ -50,5 +50,5 @@ pub fn generate() {
     // Trait
     contents.add_assign("pub trait Registry { fn get_protocol_id() -> u32; }");
 
-    fs::write("./registries/lib.rs", contents).expect("Unable to write to file '/registries/lib.rs'");
+    fs::write("./registries/mod.rs", contents).expect("Unable to write to file '/registries/mod.rs'");
 }
