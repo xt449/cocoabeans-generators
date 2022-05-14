@@ -75,7 +75,7 @@ pub fn generate() {
                 // Simple block state
                 blockstate_struct = format!("pub struct State {{ {} }}", block_property_names.iter().map(|p| format!("pub {}: {},", util::property_instance_to_rust_identifier(p), util::namespace_to_pascal_case(p))).collect::<String>());
                 // set block state stringer
-                blockstate_stringer = format!("fn to_state_string(&self) -> String {{return format!(\"{}[{}]\",{});}}", file_name, properties_map.keys().map(|p| p.to_owned() + ":{}").collect::<Vec<String>>().join(","), properties_map.keys().map(|p| "self.".to_owned() + p).collect::<Vec<String>>().join(","));
+                blockstate_stringer = format!("fn to_state_string(&self) -> String {{return format!(\"{}[{}]\",{});}}", file_name, properties_map.keys().map(|p| p.to_owned() + ":{}").collect::<Vec<String>>().join(","), properties_map.keys().map(|p| format!("self.{}", util::property_instance_to_rust_identifier(p))).collect::<Vec<String>>().join(","));
 
                 for property in properties_map {
                     let variants = property.1.as_array().unwrap().iter().map(|v| v.as_str().unwrap()).collect::<Vec<&str>>();
