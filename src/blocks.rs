@@ -40,7 +40,7 @@ pub fn generate() {
             let mut blockstate_entry = format!("crate::blocks::{}::State {{ ", file_name);
             let properties = state_properties_raw.unwrap().as_object().unwrap();
             for property in properties {
-                blockstate_entry += format!("{}: crate::blocks::{}::{}::{}", util::property_instance_to_rust_identifier(property.0), file_name, util::namespace_to_pascal_case(property.0), util::property_instance_to_rust_identifier(property.1.as_str().unwrap())).as_str();
+                blockstate_entry += format!("{}: crate::blocks::{}::{}::{}, ", util::property_instance_to_rust_identifier(property.0), file_name, util::namespace_to_pascal_case(property.0), util::property_instance_to_rust_identifier(property.1.as_str().unwrap())).as_str();
             }
             blockstate_entry += "}";
 
