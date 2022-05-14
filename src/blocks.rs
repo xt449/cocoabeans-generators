@@ -1,6 +1,4 @@
-use std::fmt::format;
 use std::fs;
-use std::ops::AddAssign;
 
 use serde_json::*;
 
@@ -75,7 +73,7 @@ pub fn generate() {
                 // Some block properties
                 block_property_names = properties_map.keys().map(|s| s.to_owned()).collect();
                 // Simple block state
-                blockstate_struct = format!("pub struct State {{ {} }}", block_property_names.iter().map(|p| format!("pub {}: {},", p, util::namespace_to_pascal_case(p))).collect::<String>());
+                blockstate_struct = format!("pub struct State {{ {} }}", block_property_names.iter().map(|p| format!("pub {}: {},", util::property_instance_to_rust_identifier(p), util::namespace_to_pascal_case(p))).collect::<String>());
                 // set block state stringer
                 blockstate_stringer = format!("fn to_state_string(&self) -> String {{return format!(\"{}[{}]\",{});}}", file_name, properties_map.keys().map(|p| p.to_owned() + ":{}").collect::<Vec<String>>().join(","), properties_map.keys().map(|p| "self.".to_owned() + p).collect::<Vec<String>>().join(","));
 
