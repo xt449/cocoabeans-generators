@@ -97,18 +97,21 @@ pub fn generate() {
     let blockstate_id_getter = "pub fn get_id_from_blockstate(blockstate: &dyn BlockState) -> usize { return BLOCKSTATE_TO_ID[&blockstate.to_state_string()]; }";
     let blockstate_state_getter = "pub fn get_blockstate_by_id(id: usize) -> &'static dyn BlockState { return ID_TO_BLOCKSTATE[id]; }";
 
+    let blockstate_constants: String = blockstate_registry.iter().map(|kvp| format!("const STATE_{}: {}= {};", kvp.1, kvp.0.split("{").next().unwrap(), kvp.0)).collect::<String>();
+
     // Using crate lazy_static
-    let blockstate_id_registry = format!("lazy_static! {{ static ref BLOCKSTATE_TO_ID: HashMap<String, usize> = HashMap::from([{}]); }}", blockstate_registry.iter().map(|kvp| format!("({}.to_state_string(),{}),", kvp.0, kvp.1)).collect::<String>());
-    let blockstate_state_registry = format!("pub const ID_TO_BLOCKSTATE: [&'static dyn BlockState; {}] = [{}];", blockstate_registry.len(), blockstate_registry.iter().map(|kvp| format!("&{},", kvp.0)).collect::<String>());
+    let blockstate_id_registry = format!("lazy_static! {{ static ref BLOCKSTATE_TO_ID: HashMap<String, usize> = HashMap::from([{}]); }}", blockstate_registry.iter().map(|kvp| format!("(STATE_{}.to_state_string(),{}),", kvp.1, kvp.1)).collect::<String>());
+    let blockstate_state_registry = format!("pub const ID_TO_BLOCKSTATE: [&'static dyn BlockState; {}] = [{}];", blockstate_registry.len(), blockstate_registry.iter().map(|kvp| format!("&STATE_{},", kvp.1)).collect::<String>());
 
     let block_simple_trait_struct = "pub trait Block { fn get_blockstate<'a>(&self) -> &'a dyn BlockState; } pub struct SimpleBlock<'t> { blockstate: &'t dyn BlockState, } impl Block for SimpleBlock<'static> { fn get_blockstate<'a>(&self) -> &'a dyn BlockState { return self.blockstate; } }";
 
     fs::write("./blocks/mod.rs",
-              format!("{} use std::collections::HashMap; use lazy_static::lazy_static; {} {} {} {} {} {}",
+              format!("{} use std::collections::HashMap; use lazy_static::lazy_static; {} {} {} {} {} {} {}",
                       modules,
                       blockstate_trait,
                       blockstate_id_getter,
                       blockstate_state_getter,
+                      blockstate_constants,
                       blockstate_id_registry,
                       blockstate_state_registry,
                       block_simple_trait_struct
