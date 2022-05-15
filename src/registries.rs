@@ -1,19 +1,15 @@
 use std::fs;
 use std::ops::AddAssign;
-use std::path::PathBuf;
 
 use serde_json::*;
 
 use crate::util;
 
 pub fn generate() {
-    let registries_data =
-        fs::read_to_string("./registries.json").expect("Unable to read file 'registries.json'!");
-    let registries: Map<String, Value> =
-        from_str(registries_data.as_str()).expect("Unable to parse file 'registries.json'!");
+    let registries_data = fs::read_to_string("./registries.json").expect("Unable to read file 'registries.json'!");
+    let registries: Map<String, Value> = from_str(registries_data.as_str()).expect("Unable to parse file 'registries.json'!");
 
-    fs::create_dir_all("./registries/")
-        .expect("Unable to write to output location './registries/'!");
+    fs::create_dir_all("./registries/").expect("Unable to write to output location './registries/'!");
 
     let mut modules: Vec<String> = Vec::new();
 
@@ -46,9 +42,7 @@ pub fn generate() {
         //         file_path.display()
         //     ).as_str(),
         // );
-        fs::write(file_path, contents).expect(
-            format!("Unable to write to file '/registries/{}.rs'", file_name).as_str(),
-        );
+        fs::write(file_path, contents).expect(format!("Unable to write to file '/registries/{}.rs'", file_name).as_str());
         // let mut file = File::create(format!("./registries/{}.rs", snake)).expect(format!("Unable to create file '/registries/{}.rs'", snake).as_str());
         // file.write_all(contents.as_bytes()).expect(format!("Unable to write to file '/registries/{}.rs'", snake).as_str());
 
@@ -69,6 +63,5 @@ pub fn generate() {
     // Trait
     contents.add_assign("pub trait Registry { fn get_protocol_id() -> u32; }");
 
-    fs::write("./registries/mod.rs", contents)
-        .expect("Unable to write to file '/registries/mod.rs'");
+    fs::write("./registries/mod.rs", contents).expect("Unable to write to file '/registries/mod.rs'");
 }

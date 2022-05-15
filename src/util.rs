@@ -3,7 +3,7 @@ const NAMESPACE_GIVEN_PREFIX: &str = "minecraft:";
 /// A namespace has the form "minecraft:stone.hit_soft"
 ///
 /// A file name has the form "stone.hit_soft"
-pub fn namespace_to_file_name(original: &String) -> String {
+pub fn namespace_to_file_name(original: &str) -> String {
     return original
         .trim_start_matches(NAMESPACE_GIVEN_PREFIX)
         // takes care of weird "worldgen/*" case
@@ -35,7 +35,7 @@ pub fn property_instance_to_rust_identifier(original: &str) -> String {
 /// A namespace has the form "minecraft:stone.hit_soft"
 ///
 /// A pascal case indentifier has the form "Stone·HitSoft"
-pub fn namespace_to_pascal_case(original: &String) -> String {
+pub fn namespace_to_pascal_case(original: &str) -> String {
     let original = original.trim_start_matches(NAMESPACE_GIVEN_PREFIX);
 
     let mut word_start: bool = true;
