@@ -12,12 +12,15 @@ pub fn generate() {
 
     let mut blockstate_registry: Vec<(String, usize)> = vec!();
 
-    let modules = blocks.keys().map(|b| format!("pub mod {};", util::namespace_to_file_name(b))).collect::<Vec<String>>().join("");
+    let modules = "pub mod block_state;";
+
+    let mut blockstates_contents: String = "#![allow(non_camel_case_types)]\nuse std::fmt::{Display, Formatter};use crate::blocks::BlockState;".to_owned();
 
     // Block entries
     for entry in blocks {
         let object = entry.1.as_object().unwrap();
         let file_name = util::namespace_to_file_name(&entry.0);
+        let pascal_name = util::namespace_to_pascal_case(&entry.0);
 
         // Default BlockState
         let mut block_default_state: String = String::new();
@@ -30,15 +33,15 @@ pub fn generate() {
             let state_properties_raw = state_obj.get("properties");
             // Single state block
             if state_properties_raw.is_none() {
-                block_default_state = "State {}".to_owned();
-                blockstate_registry.push((format!("crate::blocks::{}::State {{}}", file_name), state_obj.get("id").unwrap().as_u64().unwrap() as usize));
+                block_default_state = format!("{} {{}}", pascal_name);
+                blockstate_registry.push((format!("crate::blocks::block_state::{} {{}}", pascal_name), state_obj.get("id").unwrap().as_u64().unwrap() as usize));
                 continue;
             }
             // Everything else
-            let mut blockstate_entry = format!("crate::blocks::{}::State {{ ", file_name);
+            let mut blockstate_entry = format!("crate::blocks::block_state::{} {{ ", pascal_name);
             let properties = state_properties_raw.unwrap().as_object().unwrap();
             for property in properties {
-                blockstate_entry += format!("{}: crate::blocks::{}::{}::{}, ", util::property_instance_to_rust_identifier(property.0), file_name, util::namespace_to_pascal_case(property.0), util::property_instance_to_rust_identifier(property.1.as_str().unwrap())).as_str();
+                blockstate_entry += format!("{}: crate::blocks::block_state::{}{}::{}, ", util::property_instance_to_rust_identifier(property.0), pascal_name, util::namespace_to_pascal_case(property.0), util::property_instance_to_rust_identifier(property.1.as_str().unwrap())).as_str();
             }
             blockstate_entry += "}";
 
@@ -63,7 +66,7 @@ pub fn generate() {
                 // No block properties
                 block_property_names = vec!();
                 // Simple block state
-                blockstate_struct = "#[derive(Eq, PartialEq)]pub struct State {}".to_owned();
+                blockstate_struct = format!("#[derive(Eq, PartialEq)]pub struct {} {{}}", pascal_name);
                 // set block state stringer
                 blockstate_stringer = format!("fn to_state_string(&self) -> String {{return \"{}[]\".to_owned();}}", file_name);
             }
@@ -73,7 +76,7 @@ pub fn generate() {
                 // Some block properties
                 block_property_names = properties_map.keys().map(|s| s.to_owned()).collect();
                 // Simple block state
-                blockstate_struct = format!("#[derive(Eq, PartialEq)]pub struct State {{ {} }}", block_property_names.iter().map(|p| format!("pub {}: {},", util::property_instance_to_rust_identifier(p), util::namespace_to_pascal_case(p))).collect::<String>());
+                blockstate_struct = format!("#[derive(Eq, PartialEq)]pub struct {} {{ {} }}", pascal_name, block_property_names.iter().map(|p| format!("pub {}: {}{},", util::property_instance_to_rust_identifier(p), pascal_name, util::namespace_to_pascal_case(p))).collect::<String>());
                 // set block state stringer
                 blockstate_stringer = format!("fn to_state_string(&self) -> String {{return format!(\"{}[{}]\",{});}}", file_name, properties_map.keys().map(|p| p.to_owned() + ":{}").collect::<Vec<String>>().join(","), properties_map.keys().map(|p| format!("self.{}", util::property_instance_to_rust_identifier(p))).collect::<Vec<String>>().join(","));
 
@@ -86,12 +89,18 @@ pub fn generate() {
             }
         }
 
-        let default_impl: String = format!("impl Default for State {{fn default() -> Self {{return {};}} }}", block_default_state);
-        let blockstate_impl: String = format!("impl BlockState for State {{ {} }}", blockstate_stringer);
-        let block_properties: String = (0..block_property_names.len()).map(|i| format!("#[derive(Eq, PartialEq)]pub enum {} {{ {} }} impl Display for {} {{ fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {{ match self {{ {} }} }} }}", util::namespace_to_pascal_case(&block_property_names[i]), block_property_variants[i].iter().map(|v| util::property_instance_to_rust_identifier(v) + ",").collect::<String>(), util::namespace_to_pascal_case(&block_property_names[i]), block_property_variants[i].iter().map(|v| format!("Self::{} => f.write_str(\"{}\"),", util::property_instance_to_rust_identifier(v), v)).collect::<String>())).collect::<String>();
+        let default_impl: String = format!("impl Default for {} {{fn default() -> Self {{return {};}} }}", pascal_name, block_default_state);
+        let blockstate_impl: String = format!("impl BlockState for {} {{ {} }}", pascal_name, blockstate_stringer);
+        let block_properties: String = (0..block_property_names.len()).map(|i| format!("#[derive(Eq, PartialEq)]pub enum {}{} {{ {} }} impl Display for {}{} {{ fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {{ match self {{ {} }} }} }}", pascal_name, util::namespace_to_pascal_case(&block_property_names[i]), block_property_variants[i].iter().map(|v| util::property_instance_to_rust_identifier(v) + ",").collect::<String>(), pascal_name, util::namespace_to_pascal_case(&block_property_names[i]), block_property_variants[i].iter().map(|v| format!("Self::{} => f.write_str(\"{}\"),", util::property_instance_to_rust_identifier(v), v)).collect::<String>())).collect::<String>();
 
-        fs::write(format!("./blocks/{}.rs", file_name), format!("#![allow(non_camel_case_types)]\nuse std::fmt::{{Display, Formatter}};use crate::blocks::BlockState;{} {} {} {}", blockstate_struct, default_impl, blockstate_impl, block_properties)).expect("Unable to write to file..."/*todo*/);
+        blockstates_contents += format!("{} {} {} {} ", blockstate_struct, default_impl, blockstate_impl, block_properties).as_str();
     }
+
+    // \/ blocks/block_state.rs
+
+    fs::write("./blocks/block_state.rs", blockstates_contents).expect("idk");
+
+    // \/ blocks/mod.rs
 
     let blockstate_trait = "pub trait BlockState { fn to_state_string(&self) -> String; }";
     let blockstate_id_getter = "pub fn get_id_from_blockstate(blockstate: &dyn BlockState) -> usize { return BLOCKSTATE_TO_ID[&blockstate.to_state_string()]; }";
