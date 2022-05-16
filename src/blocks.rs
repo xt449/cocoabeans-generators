@@ -26,63 +26,17 @@ pub fn generate() {
         let object = entry.1.as_object().unwrap();
         let file_name = util::namespace_to_file_name(&entry.0);
 
-        // Default BlockState
-        let mut block_default_state: String = String::new();
-
-        // States
-        let states = object.get("states").unwrap().as_array().unwrap();
-
-        for state in states {
-            let state_obj = state.as_object().unwrap();
-            let state_properties_raw = state_obj.get("properties");
-            // Single state block
-            if state_properties_raw.is_none() {
-                block_default_state = "State {}".to_owned();
-                blockstate_registry.push((
-                    format!("crate::{}::State {{}}", file_name),
-                    state_obj.get("id").unwrap().as_u64().unwrap() as usize,
-                ));
-                continue;
-            }
-            // Everything else
-            let mut blockstate_entry = format!("crate::{}::State {{ ", file_name);
-            let properties = state_properties_raw.unwrap().as_object().unwrap();
-            for property in properties {
-                blockstate_entry += format!(
-                    "{}: crate::{}::{}::{}, ",
-                    util::property_instance_to_rust_identifier(property.0),
-                    file_name,
-                    util::namespace_to_pascal_case(property.0),
-                    util::property_instance_to_rust_identifier(property.1.as_str().unwrap())
-                )
-                .as_str();
-            }
-            blockstate_entry += "}";
-
-            if state_obj.get("default").is_some() {
-                block_default_state = blockstate_entry.to_owned();
-            }
-
-            blockstate_registry.push((
-                blockstate_entry,
-                state_obj.get("id").unwrap().as_u64().unwrap() as usize,
-            ));
-        }
-
+        // BlockState stuff
         let blockstate_struct: String;
         let block_properties: Vec<(String, Vec<&str>)>;
-        let mut blockstate_id_getter: String;
 
         // Properties
-        //let properties_raw = object.get("properties");
         match object.get("properties") {
             None => {
                 // No block properties
                 block_properties = vec![];
                 // Simple block state
                 blockstate_struct = "#[derive(Eq, PartialEq)]pub struct State {}".to_owned();
-                // Simple block state
-                blockstate_id_getter = format!("fn calculate_id(&self) -> u32 {{{}}}", "hi");
             }
             Some(properties) => {
                 let properties_map = properties.as_object().unwrap();
@@ -114,14 +68,60 @@ pub fn generate() {
                         ))
                         .collect::<String>()
                 );
-                // Variant block state
-                blockstate_id_getter = format!("fn calculate_id(&self) -> u32 {{{}}}", "hi");
             }
+        }
+
+        // Default BlockState
+        let mut blockstate_default: String = String::new();
+        // BlockState Reverse Registry
+        let mut blockstate_id_getter: String = String::new();
+
+        // States
+        for state in object.get("states").unwrap().as_array().unwrap() {
+            let state_obj = state.as_object().unwrap();
+            let state_properties_raw = state_obj.get("properties");
+            // Single state block
+            if state_properties_raw.is_none() {
+                blockstate_default = "State {}".to_owned();
+                blockstate_registry.push((
+                    format!("crate::{}::State {{}}", file_name),
+                    state_obj.get("id").unwrap().as_u64().unwrap() as usize,
+                ));
+                continue;
+            }
+            // Everything else
+            let mut blockstate_entry = format!("crate::{}::State {{ ", file_name);
+            let properties = state_properties_raw.unwrap().as_object().unwrap();
+            for property in properties {
+                blockstate_entry += format!(
+                    "{}: crate::{}::{}::{}, ",
+                    util::property_instance_to_rust_identifier(property.0),
+                    file_name,
+                    util::namespace_to_pascal_case(property.0),
+                    util::property_instance_to_rust_identifier(property.1.as_str().unwrap())
+                )
+                .as_str();
+            }
+            blockstate_entry += "}";
+
+            // Default BlockState
+            if state_obj.get("default").is_some() {
+                blockstate_default = blockstate_entry.to_owned();
+            }
+
+            // Reverse Registry
+            blockstate_id_getter = format!("fn calculate_id(&self) -> u32 {{{}}}", "0");
+
+            // Registry
+            blockstate_registry.push((
+                blockstate_entry,
+                state_obj.get("id").unwrap().as_u64().unwrap() as usize,
+            ));
         }
 
         let default_impl: String = format!(
             "impl Default for State {{fn default() -> Self {{return {};}} }}",
-            block_default_state
+            blockstate_default
         );
         let blockstate_impl: String = format!(
             "impl crate::BlockState for State {{ {} }}",
@@ -156,10 +156,7 @@ pub fn generate() {
         "./blocks/src/lib.rs",
         format!(
             "{} {} {} {}",
-            modules,
-            blockstate_trait,
-            blockstate_state_getter,
-            blockstate_state_registry,
+            modules, blockstate_trait, blockstate_state_getter, blockstate_state_registry,
         ),
     )
     .expect("Unable to write to file './blocks/src/lib.rs'");
