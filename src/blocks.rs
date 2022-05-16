@@ -5,10 +5,13 @@ use serde_json::*;
 use crate::util;
 
 pub fn generate() {
-    let blocks_data = fs::read_to_string("./blocks.json").expect("Unable to read file 'blocks.json'!");
-    let blocks: Map<String, Value> = from_str(blocks_data.as_str()).expect("Unable to parse file 'blocks.json'!");
+    let blocks_data =
+        fs::read_to_string("./blocks.json").expect("Unable to read file 'blocks.json'!");
+    let blocks: Map<String, Value> =
+        from_str(blocks_data.as_str()).expect("Unable to parse file 'blocks.json'!");
 
-    fs::create_dir_all("./blocks/").expect("Unable to write to output location './blocks/'!");
+    fs::create_dir_all("./src/blocks/")
+        .expect("Unable to write to output location './src/blocks/'!");
 
     let mut blockstate_registry: Vec<(String, usize)> = vec![];
 
@@ -52,7 +55,7 @@ pub fn generate() {
                     util::namespace_to_pascal_case(property.0),
                     util::property_instance_to_rust_identifier(property.1.as_str().unwrap())
                 )
-                    .as_str();
+                .as_str();
             }
             blockstate_entry += "}";
 
@@ -60,7 +63,10 @@ pub fn generate() {
                 block_default_state = blockstate_entry.to_owned();
             }
 
-            blockstate_registry.push((blockstate_entry, state_obj.get("id").unwrap().as_u64().unwrap() as usize, ));
+            blockstate_registry.push((
+                blockstate_entry,
+                state_obj.get("id").unwrap().as_u64().unwrap() as usize,
+            ));
         }
 
         let blockstate_struct: String;
@@ -78,14 +84,30 @@ pub fn generate() {
                 // Simple block state
                 blockstate_struct = "#[derive(Eq, PartialEq)]pub struct State {}".to_owned();
                 // set block state stringer
-                blockstate_stringer = format!("fn to_state_string(&self) -> String {{return \"{}[]\".to_owned();}}", file_name);
+                blockstate_stringer = format!(
+                    "fn to_state_string(&self) -> String {{return \"{}[]\".to_owned();}}",
+                    file_name
+                );
             }
             Some(properties) => {
                 let properties_map = properties.as_object().unwrap();
 
                 // Some block properties
-                block_properties = properties_map.iter().map(|kvp| (kvp.0.to_owned(), kvp.1.as_array().unwrap().iter().map(|v| v.as_str().unwrap()).collect::<Vec<&str>>())).collect::<Vec<(String, Vec<&str>)>>();//property.1.as_array().unwrap().iter().map(|v| v.as_str().unwrap()).collect::<Vec<&str>>()
-                // Descriptive block state
+                block_properties = properties_map
+                    .iter()
+                    .map(|kvp| {
+                        (
+                            kvp.0.to_owned(),
+                            kvp.1
+                                .as_array()
+                                .unwrap()
+                                .iter()
+                                .map(|v| v.as_str().unwrap())
+                                .collect::<Vec<&str>>(),
+                        )
+                    })
+                    .collect::<Vec<(String, Vec<&str>)>>(); //property.1.as_array().unwrap().iter().map(|v| v.as_str().unwrap()).collect::<Vec<&str>>()
+                                                            // Descriptive block state
                 blockstate_struct = format!(
                     "#[derive(Eq, PartialEq)]pub struct State {{ {} }}",
                     block_properties
@@ -115,15 +137,24 @@ pub fn generate() {
             }
         }
 
-        let default_impl: String = format!("impl Default for State {{fn default() -> Self {{return {};}} }}", block_default_state);
-        let blockstate_impl: String = format!("impl crate::blocks::BlockState for State {{ {} }}", blockstate_stringer);
+        let default_impl: String = format!(
+            "impl Default for State {{fn default() -> Self {{return {};}} }}",
+            block_default_state
+        );
+        let blockstate_impl: String = format!(
+            "impl crate::blocks::BlockState for State {{ {} }}",
+            blockstate_stringer
+        );
         let block_properties: String = (0..block_properties.len()).map(|i| format!("#[derive(Eq, PartialEq)]pub enum {} {{ {} }} impl std::fmt::Display for {} {{ fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {{ match self {{ {} }} }} }}", util::namespace_to_pascal_case(&block_properties[i].0), block_properties[i].1.iter().map(|v| util::property_instance_to_rust_identifier(v) + ",").collect::<String>(), util::namespace_to_pascal_case(&block_properties[i].0), block_properties[i].1.iter().map(|v| format!("Self::{} => f.write_str(\"{}\"),", util::property_instance_to_rust_identifier(v), v)).collect::<String>())).collect::<String>();
 
         fs::write(
-            format!("./blocks/{}.rs", file_name),
-            format!("#![allow(non_camel_case_types)]\n{} {} {} {}", blockstate_struct, default_impl, blockstate_impl, block_properties),
+            format!("./src/blocks/{}.rs", file_name),
+            format!(
+                "#![allow(non_camel_case_types)]\n{} {} {} {}",
+                blockstate_struct, default_impl, blockstate_impl, block_properties
+            ),
         )
-            .expect("Unable to write to file..." /*todo*/);
+        .expect("Unable to write to file..." /*todo*/);
     }
 
     let blockstate_trait = "pub trait BlockState { fn to_state_string(&self) -> String; }";
@@ -147,13 +178,16 @@ pub fn generate() {
     let blockstate_state_registry = format!(
         "pub const ID_TO_BLOCKSTATE: [&'static dyn BlockState; {}] = [{}];",
         blockstate_registry.len(),
-        blockstate_registry.iter().map(|kvp| format!("&STATE_{},", kvp.1)).collect::<String>()
+        blockstate_registry
+            .iter()
+            .map(|kvp| format!("&STATE_{},", kvp.1))
+            .collect::<String>()
     );
 
     let block_simple_trait_struct = "pub trait Block { fn get_blockstate<'a>(&self) -> &'a dyn BlockState; } pub struct SimpleBlock<'t> { blockstate: &'t dyn BlockState, } impl Block for SimpleBlock<'static> { fn get_blockstate<'a>(&self) -> &'a dyn BlockState { return self.blockstate; } }";
 
     fs::write(
-        "./blocks/mod.rs",
+        "./src/blocks/mod.rs",
         format!(
             "{} use std::collections::HashMap; use lazy_static::lazy_static; {} {} {} {} {} {} {}",
             modules,
@@ -166,5 +200,5 @@ pub fn generate() {
             block_simple_trait_struct
         ),
     )
-        .expect("Unable to write to file './blocks/mod.rs'");
+    .expect("Unable to write to file './src/blocks/mod.rs'");
 }

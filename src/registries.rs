@@ -6,10 +6,13 @@ use serde_json::*;
 use crate::util;
 
 pub fn generate() {
-    let registries_data = fs::read_to_string("./registries.json").expect("Unable to read file 'registries.json'!");
-    let registries: Map<String, Value> = from_str(registries_data.as_str()).expect("Unable to parse file 'registries.json'!");
+    let registries_data =
+        fs::read_to_string("./registries.json").expect("Unable to read file 'registries.json'!");
+    let registries: Map<String, Value> =
+        from_str(registries_data.as_str()).expect("Unable to parse file 'registries.json'!");
 
-    fs::create_dir_all("./registries/").expect("Unable to write to output location './registries/'!");
+    fs::create_dir_all("./src/registries/")
+        .expect("Unable to write to output location './src/registries/'!");
 
     let mut modules: Vec<String> = Vec::new();
 
@@ -22,7 +25,27 @@ pub fn generate() {
 
         // Enum
         let entries = object.get("entries").unwrap().as_object().unwrap();
-        contents.add_assign(format!("#![allow(non_camel_case_types, unused)]\npub enum {}Registry {{ {}}}", enum_name, entries.iter().map(|kvp| format!("{} = {}, ", util::namespace_to_rust_identifier(kvp.0), kvp.1.as_object().unwrap().get("protocol_id").unwrap().as_u64().unwrap())).collect::<String>()).as_str());
+        contents.add_assign(
+            format!(
+                "#![allow(non_camel_case_types, unused)]\npub enum {}Registry {{ {}}}",
+                enum_name,
+                entries
+                    .iter()
+                    .map(|kvp| format!(
+                        "{} = {}, ",
+                        util::namespace_to_rust_identifier(kvp.0),
+                        kvp.1
+                            .as_object()
+                            .unwrap()
+                            .get("protocol_id")
+                            .unwrap()
+                            .as_u64()
+                            .unwrap()
+                    ))
+                    .collect::<String>()
+            )
+            .as_str(),
+        );
 
         // Registry
         let protocol_id = object.get("protocol_id").unwrap().as_u64().unwrap();
@@ -34,7 +57,7 @@ pub fn generate() {
             contents.add_assign(format!(" impl Default for {}Registry {{fn default() -> Self {{ return {}Registry::{}; }} }}", enum_name, enum_name, util::namespace_to_rust_identifier(default.unwrap().as_str().unwrap()).as_str()).as_str());
         }
 
-        let file_path = format!("./registries/{}.rs", file_name);
+        let file_path = format!("./src/registries/{}.rs", file_name);
         // TODO - unused
         // fs::create_dir_all(file_path.parent().unwrap()).expect(
         //     format!(
@@ -42,7 +65,13 @@ pub fn generate() {
         //         file_path.display()
         //     ).as_str(),
         // );
-        fs::write(file_path, contents).expect(format!("Unable to write to file '/registries/{}.rs'", file_name).as_str());
+        fs::write(file_path, contents).expect(
+            format!(
+                "Unable to write to file './src/registries/{}.rs'",
+                file_name
+            )
+            .as_str(),
+        );
         // let mut file = File::create(format!("./registries/{}.rs", snake)).expect(format!("Unable to create file '/registries/{}.rs'", snake).as_str());
         // file.write_all(contents.as_bytes()).expect(format!("Unable to write to file '/registries/{}.rs'", snake).as_str());
 
@@ -63,5 +92,6 @@ pub fn generate() {
     // Trait
     contents.add_assign("pub trait Registry { fn get_protocol_id() -> u32; }");
 
-    fs::write("./registries/mod.rs", contents).expect("Unable to write to file '/registries/mod.rs'");
+    fs::write("./src/registries/mod.rs", contents)
+        .expect("Unable to write to file './src/registries/mod.rs'");
 }
