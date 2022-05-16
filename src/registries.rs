@@ -22,7 +22,7 @@ pub fn generate() {
 
         // Enum
         let entries = object.get("entries").unwrap().as_object().unwrap();
-        contents.add_assign(format!("#![allow(non_camel_case_types, unused)]\n#[derive(Copy, Clone)] pub enum {}Registry {{ {}}}", enum_name, entries.iter().map(|kvp| format!("{} = {}, ", util::namespace_to_rust_identifier(kvp.0), kvp.1.as_object().unwrap().get("protocol_id").unwrap().as_u64().unwrap())).collect::<String>()).as_str());
+        contents.add_assign(format!("#![allow(non_camel_case_types, unused)]\npub enum {}Registry {{ {}}}", enum_name, entries.iter().map(|kvp| format!("{} = {}, ", util::namespace_to_rust_identifier(kvp.0), kvp.1.as_object().unwrap().get("protocol_id").unwrap().as_u64().unwrap())).collect::<String>()).as_str());
 
         // Registry
         let protocol_id = object.get("protocol_id").unwrap().as_u64().unwrap();
