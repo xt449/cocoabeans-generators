@@ -17,7 +17,7 @@ fn main() {
 
     // Lib
     println!("Finishing...");
-    fs::write("./lib.rs", "pub mod blocks; pub mod registries;").expect("Unable to write to file '/lib.rs'");
+    //fs::write("./lib.rs", "pub mod blocks; pub mod registries;").expect("Unable to write to file '/lib.rs'");
 
     println!("Done!")
 }

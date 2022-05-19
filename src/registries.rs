@@ -12,8 +12,8 @@ pub fn generate() {
     let registries: Map<String, Value> =
         from_str(registries_data.as_str()).expect("Unable to parse file 'registries.json'!");
 
-    fs::create_dir_all("./registries/")
-        .expect("Unable to write to output location './registries/'!");
+    fs::create_dir_all("./registries/src/")
+        .expect("Unable to write to output location './registries/src/'!");
 
     let mut modules: Vec<String> = Vec::new();
 
@@ -38,7 +38,6 @@ pub fn generate() {
             contents.add_assign(format!(" impl Default for {}Registry {{fn default() -> Self {{ return {}Registry::{}; }} }}", enum_name, enum_name, util::namespace_to_rust_identifier(default.unwrap().as_str().unwrap()).as_str()).as_str());
         }
 
-        let file_path = format!("./registries/{}.rs", file_name);
         // TODO - unused
         // fs::create_dir_all(file_path.parent().unwrap()).expect(
         //     format!(
@@ -46,8 +45,8 @@ pub fn generate() {
         //         file_path.display()
         //     ).as_str(),
         // );
-        fs::write(file_path, contents).expect(
-            format!("Unable to write to file '/registries/{}.rs'", file_name).as_str(),
+        fs::write(format!("./registries/src/{}.rs", file_name), contents).expect(
+            format!("Unable to write to file './registries/src/{}.rs'", file_name).as_str(),
         );
         // let mut file = File::create(format!("./registries/{}.rs", snake)).expect(format!("Unable to create file '/registries/{}.rs'", snake).as_str());
         // file.write_all(contents.as_bytes()).expect(format!("Unable to write to file '/registries/{}.rs'", snake).as_str());
@@ -69,6 +68,6 @@ pub fn generate() {
     // Trait
     contents.add_assign("pub trait Registry { fn get_protocol_id() -> u32; }");
 
-    fs::write("./registries/mod.rs", contents)
-        .expect("Unable to write to file '/registries/mod.rs'");
+    fs::write("./registries/src/lib.rs", contents)
+        .expect("Unable to write to file './registries/src/lib.rs'");
 }

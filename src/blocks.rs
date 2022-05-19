@@ -8,7 +8,7 @@ pub fn generate() {
     let blocks_data = fs::read_to_string("./blocks.json").expect("Unable to read file 'blocks.json'!");
     let blocks: Map<String, Value> = from_str(blocks_data.as_str()).expect("Unable to parse file 'blocks.json'!");
 
-    fs::create_dir_all("./blocks/").expect("Unable to write to output location './blocks/'!");
+    fs::create_dir_all("./blocks/src/").expect("Unable to write to output location './blocks/src/'!");
 
     let mut blockstate_registry: Vec<(String, usize)> = vec!();
 
@@ -98,7 +98,7 @@ pub fn generate() {
 
     // \/ blocks/block_state.rs
 
-    fs::write("./blocks/block_state.rs", blockstates_contents).expect("idk");
+    fs::write("./blocks/src/block_state.rs", blockstates_contents).expect("idk");
 
     // \/ blocks/mod.rs
 
@@ -107,13 +107,13 @@ pub fn generate() {
     let blockstate_state_getter = "pub fn get_blockstate_by_id(id: usize) -> &'static dyn BlockState { return ID_TO_BLOCKSTATE[id]; }";
 
     // Using crate lazy_static
-    let blockstate_id_registry = format!("lazy_static! {{ static ref BLOCKSTATE_TO_ID: HashMap<String, usize> = HashMap::from([{}]); }}", blockstate_registry.iter().map(|kvp| format!("({}.to_state_string(),{}),", kvp.0, kvp.1)).collect::<String>());
+    let blockstate_id_registry = format!("static BLOCKSTATE_TO_ID: once_cell::sync::Lazy<HashMap<String, usize>> = Lazy::new(|| HashMap::from([{}]));", blockstate_registry.iter().map(|kvp| format!("({}.to_state_string(),{}),", kvp.0, kvp.1)).collect::<String>());
     let blockstate_state_registry = format!("pub const ID_TO_BLOCKSTATE: [&'static dyn BlockState; {}] = [{}];", blockstate_registry.len(), blockstate_registry.iter().map(|kvp| format!("&{},", kvp.0)).collect::<String>());
 
     let block_simple_trait_struct = "pub trait Block { fn get_blockstate<'a>(&self) -> &'a dyn BlockState; } pub struct SimpleBlock<'t> { blockstate: &'t dyn BlockState, } impl Block for SimpleBlock<'static> { fn get_blockstate<'a>(&self) -> &'a dyn BlockState { return self.blockstate; } }";
 
-    fs::write("./blocks/mod.rs",
-              format!("{} use std::collections::HashMap; use lazy_static::lazy_static; {} {} {} {} {} {}",
+    fs::write("./blocks/src/lib.rs",
+              format!("{} use std::collections::HashMap; {} {} {} {} {} {}",
                       modules,
                       blockstate_trait,
                       blockstate_id_getter,
@@ -122,5 +122,5 @@ pub fn generate() {
                       blockstate_state_registry,
                       block_simple_trait_struct
               ),
-    ).expect("Unable to write to file './blocks/mod.rs'");
+    ).expect("Unable to write to file './blocks/src/lib.rs'");
 }
