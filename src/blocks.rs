@@ -14,7 +14,7 @@ pub fn generate() {
 
     let modules = "pub mod block_state;";
 
-    let mut blockstates_contents: String = "#![allow(non_camel_case_types)]\nuse std::fmt::{Display, Formatter};use crate::blocks::BlockState;".to_owned();
+    let mut blockstates_contents: String = "#![allow(non_camel_case_types)]\nuse std::fmt::{Display, Formatter};use crate::BlockState;".to_owned();
 
     // Block entries
     for entry in blocks {
@@ -34,14 +34,14 @@ pub fn generate() {
             // Single state block
             if state_properties_raw.is_none() {
                 block_default_state = format!("{} {{}}", pascal_name);
-                blockstate_registry.push((format!("crate::blocks::block_state::{} {{}}", pascal_name), state_obj.get("id").unwrap().as_u64().unwrap() as usize));
+                blockstate_registry.push((format!("crate::block_state::{} {{}}", pascal_name), state_obj.get("id").unwrap().as_u64().unwrap() as usize));
                 continue;
             }
             // Everything else
-            let mut blockstate_entry = format!("crate::blocks::block_state::{} {{ ", pascal_name);
+            let mut blockstate_entry = format!("crate::block_state::{} {{ ", pascal_name);
             let properties = state_properties_raw.unwrap().as_object().unwrap();
             for property in properties {
-                blockstate_entry += format!("{}: crate::blocks::block_state::{}{}::{}, ", util::property_instance_to_rust_identifier(property.0), pascal_name, util::namespace_to_pascal_case(property.0), util::property_instance_to_rust_identifier(property.1.as_str().unwrap())).as_str();
+                blockstate_entry += format!("{}: crate::block_state::{}{}::{}, ", util::property_instance_to_rust_identifier(property.0), pascal_name, util::namespace_to_pascal_case(property.0), util::property_instance_to_rust_identifier(property.1.as_str().unwrap())).as_str();
             }
             blockstate_entry += "}";
 
@@ -107,7 +107,7 @@ pub fn generate() {
     let blockstate_state_getter = "pub fn get_blockstate_by_id(id: usize) -> &'static dyn BlockState { return ID_TO_BLOCKSTATE[id]; }";
 
     // Using crate lazy_static
-    let blockstate_id_registry = format!("static BLOCKSTATE_TO_ID: once_cell::sync::Lazy<HashMap<String, usize>> = Lazy::new(|| HashMap::from([{}]));", blockstate_registry.iter().map(|kvp| format!("({}.to_state_string(),{}),", kvp.0, kvp.1)).collect::<String>());
+    let blockstate_id_registry = format!("static BLOCKSTATE_TO_ID: once_cell::sync::Lazy<HashMap<String, usize>> = once_cell::sync::Lazy::new(|| HashMap::from([{}]));", blockstate_registry.iter().map(|kvp| format!("({}.to_state_string(),{}),", kvp.0, kvp.1)).collect::<String>());
     let blockstate_state_registry = format!("pub const ID_TO_BLOCKSTATE: [&'static dyn BlockState; {}] = [{}];", blockstate_registry.len(), blockstate_registry.iter().map(|kvp| format!("&{},", kvp.0)).collect::<String>());
 
     let block_simple_trait_struct = "pub trait Block { fn get_blockstate<'a>(&self) -> &'a dyn BlockState; } pub struct SimpleBlock<'t> { blockstate: &'t dyn BlockState, } impl Block for SimpleBlock<'static> { fn get_blockstate<'a>(&self) -> &'a dyn BlockState { return self.blockstate; } }";
