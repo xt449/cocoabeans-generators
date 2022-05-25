@@ -1,11 +1,16 @@
 # CocoaBeans-Generators
 Code generators for CocoaBeans Minecraft server implementation
 
-## Alternative Data Generator Bases
+
+## Alternative Base Data Generators
 ❔ = Unknown
+
 ❌ = No
+
 ➰ = Indirectly
+
 ✔️ = Yes
+
 | | [Minecraft Data](https://wiki.vg/Data_Generators) | [ArticData](https://github.com/Articdive/ArticData) | [MinestomData](https://github.com/Minestom/MinestomDataGenerator) | PrismarineJS/[minecraft-data](https://github.com/PrismarineJS/minecraft-data) | [Burger](https://github.com/TkTech/Burger) | [Pixlyzer](https://gitlab.bixilon.de/bixilon/pixlyzer/)
 | --- | --- | --- | --- | --- | --- | --- |
 | Format | JSON | JSON | JSON | JSON | JSON | JSON or MBF |
