@@ -17,7 +17,12 @@ pub fn namespace_to_file_name(original: &String) -> String {
 /// We prefix with the rust identifier escape sequence ("r#") to avoid having to deal with compilation issues on certain names.
 /// (ie. "minecraft:match" in the "minecraft:motive" registry)
 pub fn namespace_to_rust_identifier(original: &str) -> String {
-    return format!("r#{}", original.trim_start_matches(NAMESPACE_GIVEN_PREFIX).replace('.', "·"));
+    return format!(
+        "r#{}",
+        original
+            .trim_start_matches(NAMESPACE_GIVEN_PREFIX)
+            .replace('.', "·")
+    );
 }
 
 /// A property instead has the form "1" or "false"

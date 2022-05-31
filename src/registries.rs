@@ -1,6 +1,5 @@
 use std::fs;
 use std::ops::AddAssign;
-use std::path::PathBuf;
 
 use serde_json::*;
 
@@ -35,7 +34,19 @@ pub fn generate() {
         // Default
         let default = object.get("default");
         if default.is_some() {
-            contents.add_assign(format!(" impl Default for {}Registry {{fn default() -> Self {{ return {}Registry::{}; }} }}", enum_name, enum_name, util::namespace_to_rust_identifier(default.unwrap().as_str().unwrap()).as_str()).as_str());
+            contents.add_assign(
+                format!(
+                    " impl Default for {}Registry {{fn default() -> Self {{ return Self::{}; }} }}",
+                    enum_name,
+                    util::namespace_to_rust_identifier(default.unwrap().as_str().unwrap()).as_str()
+                )
+                .as_str(),
+            );
+        }
+
+        // u32 Conversion
+        if default.is_some() {
+            contents.add_assign(format!(" impl TryFrom<u32> for {}Registry {{ type Error = std::io::Error; fn try_from(value: u32) -> Result<Self, Self::Error> {{ return match value {{ {} _ => Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, \"Unable to convert to ItemRegistry\")) }}; }} }}", enum_name, entries.keys().map(|v| format!("v if v == Self::{0} as u32 => Ok(Self::{0}), ", util::namespace_to_rust_identifier(v))).collect::<String>()).as_str());
         }
 
         // TODO - unused
@@ -46,7 +57,11 @@ pub fn generate() {
         //     ).as_str(),
         // );
         fs::write(format!("./registries/src/{}.rs", file_name), contents).expect(
-            format!("Unable to write to file './registries/src/{}.rs'", file_name).as_str(),
+            format!(
+                "Unable to write to file './registries/src/{}.rs'",
+                file_name
+            )
+            .as_str(),
         );
         // let mut file = File::create(format!("./registries/{}.rs", snake)).expect(format!("Unable to create file '/registries/{}.rs'", snake).as_str());
         // file.write_all(contents.as_bytes()).expect(format!("Unable to write to file '/registries/{}.rs'", snake).as_str());
